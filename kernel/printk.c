@@ -142,7 +142,7 @@ panic(char *s)
   printk("%s\n", s);
   panicked = 1; // freeze uart output from other CPUs
   for (;;)
-    ;
+    asm volatile("wfi");
 }
 
 void

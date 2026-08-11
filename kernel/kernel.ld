@@ -4,10 +4,10 @@ ENTRY( _entry )
 SECTIONS
 {
   /*
-   * ensure that entry.S / _entry is at 0x80000000,
-   * where qemu's -kernel jumps.
+   * ensure that entry.S / _entry is at 0x402000000,
+   * where the hardware/bootloader jumps.
    */
-  . = 0x80000000;
+  . = 0x40200000;
 
   .text : {
     kernel/entry.o(_entry)

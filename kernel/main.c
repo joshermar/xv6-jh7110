@@ -15,15 +15,34 @@ main()
     printkinit();
     printk("\n");
     printk("xv6 kernel is booting\n");
-    printk("\n");
+    printk("printkinit DONE!\n");
+
     kinit();            // physical page allocator
+    printk("kinit DONE!\n");
+
     kvminit();          // create kernel page table
+    printk("kvminit DONE!\n");
+
     kvminithart();      // turn on paging
+    printk("kvminithart DONE!\n");
+
     procinit();         // process table
+    printk("procinit DONE!\n");
+
     trapinit();         // trap vectors
+    printk("trapinit DONE!\n");
+
     trapinithart();     // install kernel trap vector
+    printk("trapinithart DONE!\n");
+
     plicinit();         // set up interrupt controller
+    printk("plicinit DONE!\n");
+
     plicinithart();     // ask PLIC for device interrupts
+    printk("plicinithart DONE!\n");
+
+    panic("boop!\n");
+
     binit();            // buffer cache
     iinit();            // inode table
     fileinit();         // file table
