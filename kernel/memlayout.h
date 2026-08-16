@@ -63,3 +63,7 @@
 //   TRAPFRAME (p->trapframe, used by the trampoline)
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (TRAMPOLINE - PGSIZE)
+
+// Our ramdisk can be located anywhere in memory,
+// as long as it's out of the way of the kernel.
+#define RAMDISK 0x60000000L
