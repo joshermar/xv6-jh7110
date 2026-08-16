@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "sbi.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -14,7 +15,7 @@ extern char trampoline[], uservec[];
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
 
-extern int devintr();
+int devintr();
 
 void
 trapinit(void)
@@ -27,6 +28,17 @@ void
 trapinithart(void)
 {
   w_stvec((uint64)kernelvec);
+
+  // Enable interrupt sources
+  w_sie(r_sie() | SIE_SEIE | SIE_STIE);
+  intr_on();
+
+  // Request the first timer interrupt
+  struct sbiret ret = sbi_set_timer(r_time() + TIMESLICE);
+
+  // TODO: Look at the actual error name
+  if (ret.error)
+    panic("trapinithart: sbi_set_timer() error");
 }
 
 //
@@ -174,9 +186,8 @@ clockintr()
   }
 
   // ask for the next timer interrupt. this also clears
-  // the interrupt request. 1000000 is about a tenth
-  // of a second.
-  w_stimecmp(r_time() + 1000000);
+  // the interrupt request.
+  sbi_set_timer(r_time() + TIMESLICE);
 }
 
 // check if it's an external interrupt or software interrupt,
