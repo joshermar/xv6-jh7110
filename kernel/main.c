@@ -4,13 +4,18 @@
 #include "riscv.h"
 #include "defs.h"
 
+// entry.S needs one stack per CPU.
+__attribute__((aligned(16))) char stack0[4096 * NCPU];
+
 volatile static int started = 0;
+
+char *magic_word = (char *)0x55000000L;
 
 // start() jumps here in supervisor mode on all CPUs.
 void
 main()
 {
-  if (cpuid() == 0) {
+  if (cpuid() == 1) {
     consoleinit();
     printkinit();
     printk("\n");
@@ -41,13 +46,18 @@ main()
     plicinithart();     // ask PLIC for device interrupts
     printk("plicinithart DONE!\n");
 
-    panic("boop!\n");
-
     binit();            // buffer cache
+    printk("binit DONE!\n");
+
     iinit();            // inode table
+    printk("iinit DONE!\n");
+
     fileinit();         // file table
-    virtio_disk_init(); // emulated hard disk
+    printk("fileinit DONE!\n");
+
     userinit();         // first user process
+    printk("userinit DONE!\n");
+
 
     __atomic_store_n(&started, 1, __ATOMIC_RELEASE);
   } else {

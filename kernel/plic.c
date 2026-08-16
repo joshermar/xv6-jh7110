@@ -12,18 +12,23 @@ void
 plicinit(void)
 {
   // set desired IRQ priorities non-zero (otherwise disabled).
-  *(uint32 *)(PLIC + UART0_IRQ * 4) = 1;
-  *(uint32 *)(PLIC + VIRTIO0_IRQ * 4) = 1;
+  *(uint32 *)(PLIC_PRIORITY + UART0_IRQ * 4) = 1;
+}
+
+static void
+plicenable(int hart, uint64 irq_no)
+{
+  volatile uint32 *plic_senable = (volatile uint32 *)PLIC_SENABLE(hart);
+  plic_senable[irq_no/32] |= 1U << (irq_no % 32);
 }
 
 void
 plicinithart(void)
 {
-  int hart = cpuid();
+  int hart = cpuid();  // Add 1 to cpuid to get physical HART ID
 
-  // set enable bits for this hart's S-mode
-  // for the uart and virtio disk.
-  *(uint32 *)PLIC_SENABLE(hart) = (1 << UART0_IRQ) | (1 << VIRTIO0_IRQ);
+  // // enable UART IRQ for this HART's S-mode context
+  plicenable(hart, UART0_IRQ);
 
   // set this hart's S-mode priority threshold to 0.
   *(uint32 *)PLIC_SPRIORITY(hart) = 0;

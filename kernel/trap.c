@@ -178,7 +178,7 @@ kerneltrap()
 void
 clockintr()
 {
-  if (cpuid() == 0) {
+  if (cpuid() == 1) {
     acquire(&tickslock);
     ticks++;
     wakeup(&ticks);
