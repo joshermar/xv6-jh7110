@@ -24,6 +24,22 @@
 
 #define BACKSPACE 0x100       // erase the last output character
 #define C(x)      ((x) - '@') // Control-x
+#define CSI "\e["             // Control Sequence Introducer - starts most useful ANSI sequences
+
+static const char *ANSI_CLEAR = CSI"H"CSI"2J";
+
+// Sleep lock used to serialize console writes
+static struct sleeplock wlock;
+
+static struct {
+  struct spinlock lock;
+  // input circular buffer
+#define INPUT_BUF_SIZE 128
+  char buf[INPUT_BUF_SIZE];
+  uint r; // Read index
+  uint w; // Write index
+  uint e; // Edit index
+} cons;
 
 //
 // send one character to the uart, but don't use
@@ -47,16 +63,17 @@ consputc(int c)
   }
 }
 
-struct {
-  struct spinlock lock;
-
-  // input circular buffer
-#define INPUT_BUF_SIZE 128
-  char buf[INPUT_BUF_SIZE];
-  uint r; // Read index
-  uint w; // Write index
-  uint e; // Edit index
-} cons;
+static inline void
+uartwrite(char buf[], int n)
+{
+  int i = 0;
+  while (i < n) {
+    if (buf[i] == '\n')
+      uartputc('\r');
+    uartputc(buf[i]);
+    i += 1;
+  }
+}
 
 //
 // user write() system calls to the console go here.
@@ -65,6 +82,8 @@ struct {
 int
 consolewrite(int user_src, uint64 src, int n)
 {
+  acquiresleep(&wlock);
+
   char buf[32]; // move batches from user space to uart.
   int i = 0;
 
@@ -77,6 +96,8 @@ consolewrite(int user_src, uint64 src, int n)
     uartwrite(buf, nn);
     i += nn;
   }
+
+  releasesleep(&wlock);
 
   return i;
 }
@@ -166,6 +187,9 @@ consoleintr(int c)
       consputc(BACKSPACE);
     }
     break;
+  case C('L'): // Clear the terminal
+    printk(ANSI_CLEAR);
+    break;
   default:
     if (c != 0 && cons.e - cons.r < INPUT_BUF_SIZE) {
       c = (c == '\r') ? '\n' : c;
@@ -192,8 +216,8 @@ consoleintr(int c)
 void
 consoleinit(void)
 {
+  initsleeplock(&wlock, "console wlock");
   initlock(&cons.lock, "cons");
-
   uartinit();
 
   // connect read and write system calls

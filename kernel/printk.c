@@ -61,7 +61,7 @@ printptr(uint64 x)
 
 // Print to the console.
 int
-printk(char *fmt, ...)
+printk(const char *fmt, ...)
 {
   va_list ap;
   int i, cx, c0, c1, c2;
@@ -135,11 +135,11 @@ printk(char *fmt, ...)
 }
 
 void
-panic(char *s)
+panic(const char *s)
 {
+  intr_off();
   panicking = 1;
-  printk("panic: ");
-  printk("%s\n", s);
+  printk("panic: %s\n", s);
   panicked = 1; // freeze uart output from other CPUs
   for (;;)
     asm volatile("wfi");

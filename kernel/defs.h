@@ -74,8 +74,8 @@ int             piperead(struct pipe*, uint64, int);
 int             pipewrite(struct pipe*, uint64, int);
 
 // printk.c
-int             printk(char*, ...) __attribute__ ((format (printf, 1, 2)));
-void            panic(char*) __attribute__((noreturn));
+int             printk(const char*, ...) __attribute__ ((format (printf, 1, 2)));
+void            panic(const char*) __attribute__((noreturn));
 void            printkinit(void);
 
 // proc.c
@@ -147,7 +147,7 @@ void            prepare_return(void);
 // uart.c
 void            uartinit(void);
 void            uartintr(void);
-void            uartwrite(char [], int);
+void            uartputc(int);
 void            uartputc_sync(int);
 
 // vm.c
