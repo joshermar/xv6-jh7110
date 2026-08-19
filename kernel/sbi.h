@@ -1,14 +1,9 @@
 #ifndef SBI_H
 #define SBI_H
 
-#define SBI_EXT_CONSOLE_PUTCHAR 0x1
-#define SBI_EXT_CONSOLE_GETCHAR 0x2
-#define SBI_EXT_SHUTDOWN 0x8
-#define SBI_EXT_SET_TIMER 0x54494D45
-
 struct sbiret {
-  uint64 error;
-  uint64 value;
+  long error;
+  long value;
 };
 
 static inline struct sbiret
@@ -32,20 +27,30 @@ sbi_ecall(uint64 ext, uint64 fid, uint64 arg0, uint64 arg1,
   return (struct sbiret){ a0, a1 };
 }
 
-static struct sbiret
+static inline struct sbiret
 sbi_console_putchar(int ch) {
-  return sbi_ecall(SBI_EXT_CONSOLE_PUTCHAR, 0, ch, 0, 0, 0, 0, 0);
+  return sbi_ecall(0x1, 0, ch, 0, 0, 0, 0, 0);
 }
 
-static struct sbiret
-sbi_shutdown() {
-  return sbi_ecall(SBI_EXT_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
+static inline struct sbiret
+sbi_shutdown(void) {
+  return sbi_ecall(0x8, 0, 0, 0, 0, 0, 0, 0);
 }
 
-static struct sbiret
+#define SBI_RST_SHUTDOWN  0x0
+#define SBI_RST_COLD      0x1
+#define SBI_RST_WARM      0x2
+
+static inline struct sbiret
+sbi_system_reset(uint64 type, uint64 reason)
+{
+  return sbi_ecall(0x53525354, 0, type, reason, 0, 0, 0, 0);
+}
+
+static inline struct sbiret
 sbi_set_timer(uint64 stime)
 {
-  return sbi_ecall(SBI_EXT_SET_TIMER, 0, stime, 0, 0, 0, 0, 0);
+  return sbi_ecall(0x54494D45, 0, stime, 0, 0, 0, 0, 0);
 }
 
 #endif // SBI_H

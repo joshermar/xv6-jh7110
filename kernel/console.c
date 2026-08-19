@@ -21,6 +21,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "proc.h"
+#include "sbi.h"
 
 #define BACKSPACE 0x100       // erase the last output character
 #define C(x)      ((x) - '@') // Control-x
@@ -82,6 +83,7 @@ uartwrite(char buf[], int n)
 int
 consolewrite(int user_src, uint64 src, int n)
 {
+
   acquiresleep(&wlock);
 
   char buf[32]; // move batches from user space to uart.
@@ -189,6 +191,13 @@ consoleintr(int c)
     break;
   case C('L'): // Clear the terminal
     printk(ANSI_CLEAR);
+    break;
+  case C('O'): // Shutdown the device
+    printk(CSI"2J");
+    sbi_shutdown();
+    break;
+  case C('B'): // Restart the device
+    sbi_system_reset(SBI_RST_WARM, 0);
     break;
   default:
     if (c != 0 && cons.e - cons.r < INPUT_BUF_SIZE) {
