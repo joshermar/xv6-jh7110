@@ -23,11 +23,7 @@
 #include "proc.h"
 #include "sbi.h"
 
-#define BACKSPACE 0x100       // erase the last output character
 #define C(x)      ((x) - '@') // Control-x
-#define CSI "\e["             // Control Sequence Introducer - starts most useful ANSI sequences
-
-static const char *ANSI_CLEAR = CSI"H"CSI"2J";
 
 // Sleep lock used to serialize console writes
 static struct sleeplock wlock;
@@ -51,17 +47,9 @@ static struct {
 void
 consputc(int c)
 {
-  if (c == BACKSPACE) {
-    // if the user typed backspace, overwrite with a space.
-    uartputc_sync('\b');
-    uartputc_sync(' ');
-    uartputc_sync('\b');
-  } else {
-    // UART console needs CR character to return properly
-    if (c == '\n')
-      uartputc_sync('\r');
-    uartputc_sync(c);
-  }
+  if (c == '\n')
+    uartputc_sync('\r');
+  uartputc_sync(c);
 }
 
 static inline void
@@ -160,6 +148,15 @@ consoleread(int user_dst, uint64 dst, int n)
   return target - n;
 }
 
+static inline void
+consbackspace()
+{
+  uartputc_sync('\b');
+  uartputc_sync(' ');
+  uartputc_sync('\b');
+}
+
+
 //
 // the console input interrupt handler.
 // uartintr() calls this for each input character.
@@ -179,26 +176,30 @@ consoleintr(int c)
     while (cons.e != cons.w &&
            cons.buf[(cons.e - 1) % INPUT_BUF_SIZE] != '\n') {
       cons.e--;
-      consputc(BACKSPACE);
+      consbackspace();
     }
     break;
   case C('H'): // Backspace
   case '\x7f': // Delete key
     if (cons.e != cons.w) {
       cons.e--;
-      consputc(BACKSPACE);
+      consbackspace();
     }
     break;
   case C('L'): // Clear the terminal
-    printk(ANSI_CLEAR);
+    printk("\e[H\e[2J");
     break;
   case C('O'): // Shutdown the device
-    printk(CSI"2J");
+    printk("Shutting down...");
     sbi_shutdown();
     break;
   case C('B'): // Restart the device
+    printk("Rebooting...");
     sbi_system_reset(SBI_RST_WARM, 0);
     break;
+  case '\e':  // Replace ESC with '^'
+    c = '^';
+    // Fallthrough to echo (keep console consistent with buffer)
   default:
     if (c != 0 && cons.e - cons.r < INPUT_BUF_SIZE) {
       c = (c == '\r') ? '\n' : c;

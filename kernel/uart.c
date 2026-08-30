@@ -122,7 +122,6 @@ tx_wake() {
   release(&tx_lock);
 }
 
-
 // handle a uart interrupt, raised because input has
 // arrived, or the uart is ready for more output, or
 // both. called from devintr().
@@ -146,7 +145,7 @@ uartintr(void)
       break;
 
     default:
-      panic("uartintr: unhandled iid");
+      printk("uartintr: unhandled iid '%x'", iid);
     }
   }
 }
