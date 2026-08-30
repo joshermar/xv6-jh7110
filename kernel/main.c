@@ -55,6 +55,9 @@ main()
     fileinit();         // file table
     printk("fileinit DONE!\n");
 
+    timeinit();
+    printk("timeinit DONE!\n");
+
     userinit();         // first user process
     printk("userinit DONE!\n");
 

@@ -179,5 +179,8 @@ void            plic_complete(int);
 // ramdisk.c
 void            ramdisk_rw(struct buf *, int);
 
+// time.c
+void            timeinit(void);
+
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x) / sizeof((x)[0]))
