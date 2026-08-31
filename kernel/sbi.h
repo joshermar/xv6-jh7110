@@ -53,4 +53,14 @@ sbi_set_timer(uint64 stime)
   return sbi_ecall(0x54494D45, 0, stime, 0, 0, 0, 0, 0);
 }
 
+static inline struct sbiret sbi_hart_start(uint64 hartid, uint64 start_addr, uint64 opaque)
+{
+  return sbi_ecall(0x48534D, 0, hartid, start_addr, opaque, 0, 0, 0);
+}
+
+static inline struct sbiret sbi_hart_stop(void)
+{
+  return sbi_ecall(0x48534D, 1, 0, 0, 0, 0, 0, 0);
+}
+
 #endif // SBI_H

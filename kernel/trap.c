@@ -162,6 +162,7 @@ kerneltrap()
     // interrupt or trap from an unknown source
     printk("scause=0x%lx sepc=0x%lx stval=0x%lx\n", scause, r_sepc(),
            r_stval());
+    printk("hart=%d\n", cpuid());
     panic("kerneltrap");
   }
 
